@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PontoNet — Controle de Jornada</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f4f6f9;
+  --surface: #ffffff;
+  --surface2: #f8fafc;
+  --border: #e2e8f2;
+  --border2: #cdd5e0;
+  --primary: #1a56db;
+  --primary-light: #e8f0ff;
+  --primary-dark: #1240b0;
+  --green: #0d9a6e;
+  --green-bg: #ecfdf5;
+  --green-border: #a7f3d0;
+  --yellow: #b45309;
+  --yellow-bg: #fffbeb;
+  --yellow-border: #fde68a;
+  --red: #dc2626;
+  --red-bg: #fef2f2;
+  --red-border: #fecaca;
+  --text: #0f1923;
+  --text2: #374151;
+  --muted: #6b7a99;
+  --muted2: #94a3b8;
+  --shadow-sm: 0 1px 3px rgba(15,25,35,0.06), 0 1px 2px rgba(15,25,35,0.04);
+  --shadow: 0 4px 16px rgba(15,25,35,0.08), 0 1px 4px rgba(15,25,35,0.04);
+  --shadow-lg: 0 20px 48px rgba(15,25,35,0.12), 0 4px 16px rgba(15,25,35,0.06);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Sora',sans-serif; min-height:100vh; }
+
+/* NAV */
+.topnav {
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  padding:0 32px;
+  height:64px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  position:sticky;
+  top:0;
+  z-index:50;
+  box-shadow:var(--shadow-sm);
+}
+.nav-brand { display:flex; align-items:center; gap:12px; }
+.nav-logo {
+  width:38px; height:38px;
+  background:var(--primary);
+  border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 8px rgba(26,86,219,0.35);
+  flex-shrink:0;
+}
+.nav-logo svg { width:22px; height:22px; fill:white; }
+.nav-name { font-size:1.1rem; font-weight:700; color:var(--text); letter-spacing:-0.3px; line-height:1.1; }
+.nav-sub { font-size:0.68rem; color:var(--muted); font-weight:400; }
+.nav-right { display:flex; align-items:center; gap:16px; }
+.nav-date { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--muted); letter-spacing:0.3px; }
+.nav-time { font-family:'JetBrains Mono',monospace; font-size:1.5rem; font-weight:600; color:var(--primary); letter-spacing:1px; }
+
+/* MAIN */
+.main { max-width:1100px; margin:0 auto; padding:32px 24px; }
+
+/* STATS */
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:26px; }
+.stat-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px 20px;
+  box-shadow:var(--shadow-sm);
+  display:flex; align-items:center; gap:14px;
+  transition:box-shadow 0.2s, transform 0.2s;
+}
+.stat-card:hover { box-shadow:var(--shadow); transform:translateY(-1px); }
+.stat-icon {
+  width:46px; height:46px;
+  border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.35rem; flex-shrink:0;
+}
+.si-blue  { background:#eff6ff; }
+.si-green { background:var(--green-bg); }
+.si-yell  { background:var(--yellow-bg); }
+.si-red   { background:var(--red-bg); }
+.stat-lbl { font-size:0.7rem; color:var(--muted); font-weight:500; margin-bottom:2px; }
+.stat-val { font-size:1.75rem; font-weight:700; letter-spacing:-1px; line-height:1; }
+.sv-blue  { color:var(--primary); }
+.sv-green { color:var(--green); }
+.sv-yell  { color:var(--yellow); }
+.sv-red   { color:var(--red); }
+
+/* PANEL */
+.panel { background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:var(--shadow-sm); overflow:hidden; }
+.panel-head {
+  padding:18px 24px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  background:var(--surface2);
+}
+.panel-title { font-size:0.875rem; font-weight:600; color:var(--text2); }
+.search-wrap { position:relative; flex:1; max-width:300px; }
+.search-wrap svg { position:absolute; left:11px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--muted2); pointer-events:none; }
+.search-wrap input {
+  width:100%; padding:9px 14px 9px 36px;
+  background:var(--surface); border:1px solid var(--border2); border-radius:9px;
+  font-family:'Sora',sans-serif; font-size:0.82rem; color:var(--text); outline:none;
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+.search-wrap input:focus { border-color:var(--primary); box-shadow:0 0 0 3px rgba(26,86,219,0.1); }
+.search-wrap input::placeholder { color:var(--muted2); }
+
+/* TABLE */
+.emp-table { width:100%; border-collapse:collapse; }
+.emp-table thead tr { background:var(--surface2); }
+.emp-table thead th {
+  padding:10px 20px; text-align:left;
+  font-size:0.68rem; font-weight:600; color:var(--muted);
+  letter-spacing:0.8px; text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+}
+.emp-table tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.13s; }
+.emp-table tbody tr:last-child { border-bottom:none; }
+.emp-table tbody tr:hover { background:#f5f8ff; }
+.emp-table tbody td { padding:13px 20px; font-size:0.84rem; color:var(--text2); vertical-align:middle; }
+
+.cell-name { display:flex; align-items:center; gap:12px; }
+.avatar {
+  width:36px; height:36px;
+  border-radius:10px;
+  background:var(--primary-light);
+  color:var(--primary);
+  font-size:0.73rem; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0;
+}
+.emp-fn { font-weight:600; font-size:0.84rem; color:var(--text); }
+.role-chip {
+  display:inline-block;
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:6px; padding:3px 9px;
+  font-size:0.67rem; font-weight:500; color:var(--muted); white-space:nowrap;
+}
+.sbadge {
+  display:inline-flex; align-items:center; gap:5px;
+  border-radius:20px; padding:4px 10px;
+  font-size:0.69rem; font-weight:600; letter-spacing:0.3px;
+}
+.sbadge .dot { width:6px; height:6px; border-radius:50%; }
+.sb-none     { background:var(--surface2); color:var(--muted2); border:1px solid var(--border); }
+.sb-none .dot    { background:var(--muted2); }
+.sb-entrada  { background:var(--green-bg);  color:var(--green);  border:1px solid var(--green-border); }
+.sb-entrada .dot { background:var(--green); }
+.sb-intervalo{ background:var(--yellow-bg); color:var(--yellow); border:1px solid var(--yellow-border); }
+.sb-intervalo .dot { background:var(--yellow); }
+.sb-saida    { background:var(--red-bg);   color:var(--red);    border:1px solid var(--red-border); }
+.sb-saida .dot   { background:var(--red); }
+.punch-time { font-family:'JetBrains Mono',monospace; font-size:0.77rem; color:var(--muted); }
+
+.reg-btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 14px;
+  background:var(--primary); color:white; border:none; border-radius:8px;
+  font-family:'Sora',sans-serif; font-size:0.74rem; font-weight:600; cursor:pointer;
+  transition:background 0.2s, box-shadow 0.2s, transform 0.12s;
+}
+.reg-btn:hover { background:var(--primary-dark); box-shadow:0 4px 12px rgba(26,86,219,0.3); transform:translateY(-1px); }
+.reg-btn svg { width:12px; height:12px; }
+
+.no-res { padding:48px; text-align:center; color:var(--muted2); font-size:0.84rem; }
+
+/* MODAL */
+.overlay {
+  position:fixed; inset:0;
+  background:rgba(15,25,35,0.4);
+  backdrop-filter:blur(8px);
+  z-index:100;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  opacity:0; pointer-events:none; transition:opacity 0.25s;
+}
+.overlay.open { opacity:1; pointer-events:all; }
+.modal {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:20px; width:100%; max-width:480px;
+  box-shadow:var(--shadow-lg);
+  transform:scale(0.96) translateY(10px);
+  transition:transform 0.28s cubic-bezier(0.34,1.4,0.64,1);
+  overflow:hidden;
+}
+.overlay.open .modal { transform:scale(1) translateY(0); }
+
+.modal-head {
+  background:linear-gradient(135deg, #1a56db 0%, #2563eb 60%, #3b82f6 100%);
+  padding:28px 28px 24px; position:relative;
+}
+.mcl-btn {
+  position:absolute; top:14px; right:14px;
+  width:30px; height:30px; border-radius:8px;
+  border:1px solid rgba(255,255,255,0.25);
+  background:rgba(255,255,255,0.1); color:white;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:0.82rem; transition:background 0.2s;
+}
+.mcl-btn:hover { background:rgba(255,255,255,0.22); }
+.m-emp-row { display:flex; align-items:center; gap:14px; }
+.m-avatar {
+  width:52px; height:52px;
+  background:rgba(255,255,255,0.2); border:2px solid rgba(255,255,255,0.3);
+  border-radius:14px; display:flex; align-items:center; justify-content:center;
+  font-size:1.05rem; font-weight:700; color:white; flex-shrink:0;
+}
+.m-name { font-size:1.05rem; font-weight:700; color:white; letter-spacing:-0.2px; line-height:1.2; }
+.m-role { font-size:0.72rem; color:rgba(255,255,255,0.7); margin-top:3px; }
+.m-time-strip {
+  display:flex; align-items:center; gap:10px;
+  background:rgba(0,0,0,0.12); border-radius:10px; padding:10px 16px; margin-top:16px;
+}
+.m-time-strip svg { width:14px; height:14px; color:rgba(255,255,255,0.65); flex-shrink:0; }
+.m-now { font-family:'JetBrains Mono',monospace; font-size:1.3rem; font-weight:600; color:white; letter-spacing:1px; }
+.m-datestr { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:rgba(255,255,255,0.65); margin-left:auto; }
+
+.modal-body { padding:24px 28px 28px; }
+.m-blabel { font-size:0.68rem; font-weight:600; color:var(--muted); letter-spacing:0.8px; text-transform:uppercase; margin-bottom:14px; }
+
+.punch-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:18px; }
+.popt {
+  border:2px solid var(--border); border-radius:12px; padding:16px 8px;
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  cursor:pointer; background:var(--surface2);
+  transition:border-color 0.18s, background 0.18s, box-shadow 0.18s;
+}
+.popt:hover { border-color:var(--border2); background:white; }
+.popt .ico  { font-size:1.6rem; line-height:1; }
+.popt .lbl  { font-size:0.67rem; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--muted); }
+.popt.sel-entrada   { border-color:var(--green);  background:var(--green-bg);  box-shadow:0 0 0 3px rgba(13,154,110,0.1); }
+.popt.sel-entrada .lbl   { color:var(--green); }
+.popt.sel-intervalo { border-color:var(--yellow); background:var(--yellow-bg); box-shadow:0 0 0 3px rgba(180,83,9,0.1); }
+.popt.sel-intervalo .lbl { color:var(--yellow); }
+.popt.sel-saida     { border-color:var(--red);    background:var(--red-bg);    box-shadow:0 0 0 3px rgba(220,38,38,0.1); }
+.popt.sel-saida .lbl     { color:var(--red); }
+
+.cfm-btn {
+  width:100%; padding:14px; border:none; border-radius:11px;
+  background:var(--primary); color:white;
+  font-family:'Sora',sans-serif; font-size:0.875rem; font-weight:700;
+  cursor:pointer; transition:all 0.2s;
+  display:none; align-items:center; justify-content:center; gap:8px;
+}
+.cfm-btn.show { display:flex; }
+.cfm-btn:hover { background:var(--primary-dark); box-shadow:0 6px 20px rgba(26,86,219,0.35); transform:translateY(-1px); }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:26px; right:26px;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:12px 18px;
+  display:flex; align-items:center; gap:12px;
+  box-shadow:var(--shadow-lg); font-size:0.82rem; font-weight:500; color:var(--text);
+  z-index:200;
+  transform:translateX(calc(100% + 40px));
+  transition:transform 0.4s cubic-bezier(0.34,1.4,0.64,1);
+  max-width:330px;
+}
+.toast.show { transform:translateX(0); }
+.t-ico { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; }
+.t-ok .t-ico  { background:var(--green-bg); }
+.t-err .t-ico { background:var(--red-bg); }
+
+@keyframes spin { to { transform:rotate(360deg); } }
+.spin { width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:white; border-radius:50%; animation:spin 0.6s linear infinite; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+.emp-table tbody tr { animation:fadeUp 0.22s ease both; }
+
+.footer { text-align:center; padding:24px; font-size:0.7rem; color:var(--muted2); }
+
+@media(max-width:768px) {
+  .topnav { padding:0 16px; }
+  .main { padding:18px 12px; }
+  .stats-row { grid-template-columns:1fr 1fr; }
+  .emp-table thead th:nth-child(3),
+  .emp-table tbody td:nth-child(3),
+  .emp-table thead th:nth-child(4),
+  .emp-table tbody td:nth-child(4) { display:none; }
+}
+@media(max-width:480px) {
+  .nav-date { display:none; }
+  .punch-grid { grid-template-columns:1fr 1fr 1fr; }
+  .modal-head { padding:20px 20px 18px; }
+  .modal-body { padding:18px 20px 22px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="nav-brand">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+    </div>
+    <div>
+      <div class="nav-name">PontoNet</div>
+      <div class="nav-sub">Controle de Jornada de Trabalho</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div class="nav-date" id="nav-date"></div>
+    <div class="nav-time" id="nav-clock">--:--:--</div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon si-blue">👥</div>
+      <div><div class="stat-lbl">Colaboradores</div><div class="stat-val sv-blue" id="s-total">30</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-green">✅</div>
+      <div><div class="stat-lbl">Presentes</div><div class="stat-val sv-green" id="s-in">0</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-yell">⏸️</div>
+      <div><div class="stat-lbl">Em Intervalo</div><div class="stat-val sv-yell" id="s-brk">0</div></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon si-red">🚪</div>
+      <div><div class="stat-lbl">Saídas</div><div class="stat-val sv-red" id="s-out">0</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <div class="panel-title">Lista de Colaboradores</div>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search" placeholder="Buscar nome ou função..." oninput="doFilter()" />
+      </div>
+    </div>
+    <table class="emp-table">
+      <thead>
+        <tr>
+          <th style="width:40%">Colaborador</th>
+          <th style="width:22%">Função</th>
+          <th style="width:16%">Status</th>
+          <th style="width:12%">Último Reg.</th>
+          <th style="width:10%"></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="footer">PontoNet &copy; 2025 &mdash; Registros sincronizados automaticamente com Google Sheets</div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="bgClose(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <button class="mcl-btn" onclick="closeModal()">✕</button>
+      <div class="m-emp-row">
+        <div class="m-avatar" id="m-av"></div>
+        <div><div class="m-name" id="m-nm"></div><div class="m-role" id="m-rl"></div></div>
+      </div>
+      <div class="m-time-strip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <div class="m-now" id="m-clk">--:--:--</div>
+        <div class="m-datestr" id="m-dt"></div>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="m-blabel">Tipo de Registro</div>
+      <div class="punch-grid">
+        <div class="popt" id="po-entrada"   onclick="selPunch('entrada')">  <span class="ico">🟢</span><span class="lbl">Entrada</span>  </div>
+        <div class="popt" id="po-intervalo" onclick="selPunch('intervalo')"><span class="ico">🟡</span><span class="lbl">Intervalo</span></div>
+        <div class="popt" id="po-saida"     onclick="selPunch('saida')">    <span class="ico">🔴</span><span class="lbl">Saída</span>    </div>
+      </div>
+      <button class="cfm-btn" id="cfm" onclick="doPunch()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M20 6L9 17l-5-5"/></svg>
+        <span id="cfm-lbl">Confirmar</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="t-ico" id="t-ico"></div>
+  <div id="t-msg"></div>
+</div>
+
+<script>
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbwZQongnVI7Kiy5-LHm0wRpHtCkq2RrcAuwTbmdoL24uBKD7I295RUiWcUmOmfqQGAC/exec";
+
+const EMP = [
+  {n:"ANA CACA BALBINO DA SILVA",r:"ASSISTENTE ADM"},
+  {n:"ABRAAO LINCOL ALVES MORAES",r:"ASSISTENTE ADM"},
+  {n:"CAILANE CIRIACO DE BRITO",r:"AUX SERV GERAIS"},
+  {n:"EVERTON BARBOSA DOS SANTOS",r:"OP DE EMPILHADEIRA"},
+  {n:"FABIANO SILVA DOS SANTOS",r:"MOTORISTA D"},
+  {n:"GABRIEL DARLAN TEIXEIRA E SILVA",r:"OP DE PRENSA"},
+  {n:"JOSE FLAVIO GUILHERME ANTONIO",r:"AUX SERV GERAIS"},
+  {n:"JOSE RENATO BISPO",r:"MAÇARIQUEIRO"},
+  {n:"MARCILIO DA SILVA PEREIRA",r:"SOLDADOR"},
+  {n:"MARIVALDO NUNES DA CRUZ",r:"SOLDADOR"},
+  {n:"MATHEUS DA CRUZ DE JESUS",r:"AJUDANTE DE PATIO"},
+  {n:"TAILA TEOFILO SANTOS DE JESUS",r:"AUX DE SERVIÇOS GERAIS"},
+  {n:"WILDSON SANTANA DA CRUZ",r:"AUX DE SERVIÇOS GERAIS"},
+  {n:"RAFAEL ANTONIO MARINES GUAPE",r:"AUX DE SERVIÇOS GERAIS"},
+  {n:"JOSE MARIA DA COSTA BAIONETA DA SILVA",r:"ENCARREGADO"},
+  {n:"ALBERTE TAIRONE BARROS DE OLIVEIRA",r:"OP. DE PRENSA"},
+  {n:"ARIALDO DE SOUSA SANTOS",r:"ENCARREGADO DE PATIO"},
+  {n:"JACKSON DOS SANTOS",r:"OP DE MAQUINA"},
+  {n:"JARDELINO MARCELINO DOS SANTOS NETO",r:"OP DE PRENSA"},
+  {n:"INGRID VITORIA DE OLIVETRA",r:"BALANCEIRA"},
+  {n:"PALOMA FERREIRA SOUSA",r:"OP DE PRENSA"},
+  {n:"ROBERT BARROS DE SOUZA",r:"AUX DE PATIO"},
+  {n:"CRISPIM BISPO DA SILVA",r:"MAÇARIQUEIRO"},
+  {n:"JAILSON SANTANA SILVA",r:"MOTORISTA"},
+  {n:"PAULINHO",r:"OP DE ESCAVADEIRA"},
+  {n:"CRISTIANE",r:"COZINHEIRA"},
+  {n:"NOEL JESUS",r:"MOTORISTA"},
+  {n:"ALTIMAR DAMASCENO FRANCA",r:"MOTORISTA"},
+  {n:"WELLINGTON BATISTA DIAS DOS SANTOS",r:"MOTORISTA CARRETEIRO"},
+  {n:"ELIAS SILVA DOS SANTOS",r:"PRESTADOR DE SERVIÇO PATIO"}
+];
+
+let status = {}, cur = null, punch = null, filt = [...EMP], toastT;
+
+function ini(n){const p=n.trim().split(' ');return p.length>=2?p[0][0]+p[1][0]:n.substring(0,2);}
+
+function tickClock(){
+  const d=new Date();
+  const t=d.toLocaleTimeString('pt-BR');
+  const dl=d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short',year:'numeric'}).toUpperCase();
+  document.getElementById('nav-clock').textContent=t;
+  document.getElementById('nav-date').textContent=dl;
+  document.getElementById('m-clk').textContent=t;
+  document.getElementById('m-dt').textContent=d.toLocaleDateString('pt-BR');
+}
+setInterval(tickClock,1000); tickClock();
+
+function sBadge(n){
+  const s=status[n];
+  if(!s) return `<span class="sbadge sb-none"><span class="dot"></span>Não registrado</span>`;
+  const lb={entrada:'Presente',intervalo:'Intervalo',saida:'Saída'};
+  return `<span class="sbadge sb-${s.t}"><span class="dot"></span>${lb[s.t]}</span>`;
+}
+
+function render(){
+  const tb=document.getElementById('tbody');
+  if(!filt.length){tb.innerHTML=`<tr><td colspan="5"><div class="no-res">Nenhum resultado encontrado.</div></td></tr>`;return;}
+  tb.innerHTML=filt.map((e,i)=>{
+    const s=status[e.n];
+    const en=e.n.replace(/'/g,"\\'");
+    return `<tr style="animation-delay:${i*0.016}s" onclick="openM('${en}')">
+      <td><div class="cell-name"><div class="avatar">${ini(e.n)}</div><div class="emp-fn">${e.n}</div></div></td>
+      <td><span class="role-chip">${e.r}</span></td>
+      <td>${sBadge(e.n)}</td>
+      <td><span class="punch-time">${s?s.tm:'—'}</span></td>
+      <td><button class="reg-btn" onclick="event.stopPropagation();openM('${en}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Registrar
+      </button></td>
+    </tr>`;
+  }).join('');
+  const sv=Object.values(status);
+  document.getElementById('s-in') .textContent=sv.filter(s=>s.t==='entrada').length;
+  document.getElementById('s-brk').textContent=sv.filter(s=>s.t==='intervalo').length;
+  document.getElementById('s-out').textContent=sv.filter(s=>s.t==='saida').length;
+}
+
+function doFilter(){
+  const q=document.getElementById('search').value.toLowerCase().trim();
+  filt=q?EMP.filter(e=>e.n.toLowerCase().includes(q)||e.r.toLowerCase().includes(q)):[...EMP];
+  render();
+}
+
+function openM(name){
+  const e=EMP.find(x=>x.n===name); if(!e) return;
+  cur=e; punch=null;
+  document.getElementById('m-av').textContent=ini(e.n);
+  document.getElementById('m-nm').textContent=e.n;
+  document.getElementById('m-rl').textContent=e.r;
+  ['entrada','intervalo','saida'].forEach(t=>document.getElementById(`po-${t}`).className='popt');
+  const b=document.getElementById('cfm');
+  b.className='cfm-btn'; b.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M20 6L9 17l-5-5"/></svg><span id="cfm-lbl">Confirmar</span>`;
+  document.getElementById('overlay').classList.add('open');
+}
+
+function bgClose(e){if(e.target===document.getElementById('overlay'))closeModal();}
+function closeModal(){document.getElementById('overlay').classList.remove('open');cur=null;punch=null;}
+
+function selPunch(t){
+  punch=t;
+  ['entrada','intervalo','saida'].forEach(x=>document.getElementById(`po-${x}`).className='popt'+(x===t?` sel-${t}`:''));
+  const lb={entrada:'Confirmar Entrada',intervalo:'Confirmar Intervalo',saida:'Confirmar Saída'};
+  const b=document.getElementById('cfm');
+  b.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M20 6L9 17l-5-5"/></svg><span>${lb[t]}</span>`;
+  b.className='cfm-btn show';
+}
+
+async function doPunch(){
+  if(!cur||!punch) return;
+  const now=new Date();
+  const tm=now.toLocaleTimeString('pt-BR');
+  const dt=now.toLocaleDateString('pt-BR');
+  const dw=now.toLocaleDateString('pt-BR',{weekday:'long'});
+
+  const b=document.getElementById('cfm');
+  b.innerHTML=`<div class="spin"></div><span>Registrando...</span>`;
+  b.style.pointerEvents='none';
+
+  const pay={nome:cur.n,funcao:cur.r,tipo:punch.toUpperCase(),data:dt,hora:tm,diaSemana:dw};
+
+  // Local backup
+  const arr=JSON.parse(localStorage.getItem('pn')||'[]');
+  arr.push({...pay,ts:Date.now()});
+  localStorage.setItem('pn',JSON.stringify(arr));
+
+  // Google Sheets
+  try{
+    const fd=new FormData();
+    Object.entries(pay).forEach(([k,v])=>fd.append(k,v));
+    await fetch(SHEETS_URL,{method:'POST',body:fd,mode:'no-cors'});
+  }catch(err){console.warn('Sheets:',err);}
+
+  status[cur.n]={t:punch,tm};
+  render();
+  b.style.pointerEvents='';
+  closeModal();
+
+  const ico={entrada:'✅',intervalo:'⏸️',saida:'🚪'};
+  const msg={entrada:`Entrada registrada — ${tm}`,intervalo:`Intervalo registrado — ${tm}`,saida:`Saída registrada — ${tm}`};
+  toast(ico[punch],msg[punch],'t-ok');
+}
+
+function toast(ico,msg,cls){
+  document.getElementById('t-ico').textContent=ico;
+  document.getElementById('t-msg').textContent=msg;
+  const t=document.getElementById('toast');
+  t.className=`toast show ${cls}`;
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'),4500);
+}
+
+render();
+</script>
+</body>
+</html>
