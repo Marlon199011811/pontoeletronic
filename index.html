@@ -373,6 +373,16 @@ body { background:var(--bg); color:var(--text); font-family:'Sora',sans-serif; m
       </div>
     </div>
     <div class="modal-body">
+      <div id="m-lastreg" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div id="m-lastreg-ico" style="font-size:1.3rem;flex-shrink:0;"></div>
+          <div>
+            <div style="font-size:0.67rem;font-weight:600;color:var(--muted);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:2px;">Último Registro</div>
+            <div style="font-size:0.84rem;font-weight:600;color:var(--text);" id="m-lastreg-tipo"></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--muted);margin-top:1px;" id="m-lastreg-hora"></div>
+          </div>
+        </div>
+      </div>
       <div class="m-blabel">Tipo de Registro</div>
       <div class="punch-grid">
         <div class="popt" id="po-entrada"   onclick="selPunch('entrada')">  <span class="ico">🟢</span><span class="lbl">Entrada</span>  </div>
@@ -396,9 +406,9 @@ body { background:var(--bg); color:var(--text); font-family:'Sora',sans-serif; m
 const SHEETS_URL = "https://script.google.com/macros/s/AKfycbwZQongnVI7Kiy5-LHm0wRpHtCkq2RrcAuwTbmdoL24uBKD7I295RUiWcUmOmfqQGAC/exec";
 
 const EMP = [
-  {n:"ANA CACIA BALBINO DA SILVA",r:"ASSISTENTE ADM"},
+  {n:"ANA CACA BALBINO DA SILVA",r:"ASSISTENTE ADM"},
   {n:"ABRAAO LINCOL ALVES MORAES",r:"ASSISTENTE ADM"},
-  {n:"CAILANE CIRIACO DE BRITO",r:"ASSISTENTE ADM"},
+  {n:"CAILANE CIRIACO DE BRITO",r:"AUX SERV GERAIS"},
   {n:"EVERTON BARBOSA DOS SANTOS",r:"OP DE EMPILHADEIRA"},
   {n:"FABIANO SILVA DOS SANTOS",r:"MOTORISTA D"},
   {n:"GABRIEL DARLAN TEIXEIRA E SILVA",r:"OP DE PRENSA"},
@@ -486,6 +496,21 @@ function openM(name){
   ['entrada','saida'].forEach(t=>document.getElementById(`po-${t}`).className='popt');
   const b=document.getElementById('cfm');
   b.className='cfm-btn'; b.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><path d="M20 6L9 17l-5-5"/></svg><span id="cfm-lbl">Confirmar</span>`;
+  // Last registration
+  const lr=document.getElementById('m-lastreg');
+  const s=status[e.n];
+  if(s){
+    const lbTipo={entrada:'Entrada',saida:'Saída'};
+    const lbIco={entrada:'🟢',saida:'🔴'};
+    const lbColor={entrada:'var(--green)',saida:'var(--red)'};
+    document.getElementById('m-lastreg-ico').textContent=lbIco[s.t];
+    document.getElementById('m-lastreg-tipo').textContent=lbTipo[s.t];
+    document.getElementById('m-lastreg-tipo').style.color=lbColor[s.t];
+    document.getElementById('m-lastreg-hora').textContent='Registrado hoje às '+s.tm;
+    lr.style.display='block';
+  } else {
+    lr.style.display='none';
+  }
   document.getElementById('overlay').classList.add('open');
 }
 
